@@ -41,6 +41,8 @@ class UserSigned extends User {
   protected $email;
   private   $password;
   protected $cart;
+  protected $houseAddress;
+  protected $billingAddress;
   protected $shoppedItems = [];
 
   // GETTER
@@ -50,6 +52,14 @@ class UserSigned extends User {
 
   public function getCart(){
     return $this->cart;
+  }
+
+  public function getHouseAddress(){
+    return $this->houseAddress;
+  }
+
+  public function getBillingAddress(){
+    return $this->billingAddress;
   }
 
   public function getShoppedItems(){
@@ -64,12 +74,35 @@ class UserSigned extends User {
     $this->cart = $cart;
   }
 
+  public function setHouseAddress($houseAddress){
+    $this->houseAddress = $houseAddress;
+  }
+
+  public function setBillingAddress($billingAddress){
+    $this->billingAddress = $billingAddress;
+  }
+
   public function setPassword($password){
     $this->password = $password;
   }
 
-  public function setShoppedItems($shoppedItems){
-    $this->shoppedItems = $shoppedItems;
+  public function addShoppedItems($shoppedItems){
+    $this->shoppedItems[] = $shoppedItems;
+  }
+
+  public function displayCartPin(){
+    echo "Il pin attuale della sua carta è: " . $this->cart->getPin();
+  }
+
+  public function resetCartPin(){
+    $this->cart->setPin("0000");
+  }
+
+  public function buyArticle($article){
+    // Permetti acquisto se carta valida
+    // if($this->$cart->checkValidCart()){
+      $this->addShoppedItems($article);
+    // }
   }
 
 }
@@ -109,8 +142,46 @@ class Cart{
   public function getExpiration(){
     return $this->expiration;
   }
+
+  public function setPin($pin){
+    $this->pin = $pin;
+  }
+
+  public function checkValidCart(){
+    return ($this->expiration > 2021); //Upgrade with dynamic data!
+  }
 }
 // /CART & SONS =================================================================
+class Address{
+  private $city;
+  private $street;
+  private $houseNumber;
+  private $postalCode;
+
+  public function __construct(string $city,string $street,string $houseNumber,string $postalCode) {
+        $this->city = $city;
+        $this->street = $street;
+        $this->houseNumber = $houseNumber;
+        $this->postalCode = $postalCode;
+  }
+  public function getCity(){
+    return $this->city;
+  }
+
+  public function getStreet(){
+    return $this->street;
+  }
+
+  public function getHouseNumber(){
+    return $this->houseNumber;
+  }
+
+  public function getpostalCode(){
+    return $this->postalCode;
+  }
+}
+
+// ARTICLE & SONS ==============================================================
 class article{
   private $id;
   protected $name;
@@ -163,7 +234,7 @@ class article{
 
 }
 
-
+//==============================================================================
 
 
 
@@ -175,13 +246,30 @@ $pippoSigned = new UserSigned("00000001", "Pippo","Baudo");
 $pippoSigned->setEmail("pippobaudo@gmail.com");
 $pippoSigned->setPassword("pipponazionale");
 
-$cartPippo = new Cart("cart_001","14785","VISA","2025/07/01");
+$pippoSigned->setHouseAddress(new Address("Milano","via Monte Napoleone", "45","200019"));
+$pippoSigned->setBillingAddress(new Address("Ostia","via del canbianco", "22","771056"));
+
+$cartPippo = new Cart("cart_001","14785","VISA",2025);
 $pippoSigned->setCart($cartPippo);
 
 
 $article1 = new Article("art_001","Sedia","img/art_001","33x33x33cm","9,99€");
 $article2 = new Article("art_002","Tavolo","img/art_002","33x33x33cm","9,99€");
 $article3 = new Article("art_003","Televisore","img/art_003","33x33x33cm","9,99€");
+
+$pippoSigned->buyArticle($article1);
+$pippoSigned->buyArticle($article3);
+$pippoSigned->buyArticle($article3);
+$pippoSigned->buyArticle($article2);
+$pippoSigned->buyArticle($article1);
+$pippoSigned->buyArticle($article2);
+
+$pippoSigned->displayCartPin();
+echo "<br>";
+echo "RESET PIN IN CORSO...<br>";
+$pippoSigned->resetCartPin();
+$pippoSigned->displayCartPin();
+echo "<hr>"
 
 ?>
 
@@ -193,10 +281,28 @@ $article3 = new Article("art_003","Televisore","img/art_003","33x33x33cm","9,99�
   </head>
   <body>
     <div class="user">
-      <?php echo "ID:" . $pippoSigned->getID() . "<br>"?>
-      <?php echo "Name:" . $pippoSigned->getName() . "<br>" ?>
-      <?php echo "Surname:" . $pippoSigned->getSurname() . "<br>" ?>
-      <?php echo "Cart:" . $pippoSigned->getCart()->getId() . "<br>" ?>
+      <?php echo "ID: " . $pippoSigned->getID() . "<br>"?>
+      <?php echo "Name: " . $pippoSigned->getName() . "<br>" ?>
+      <?php echo "Surname: " . $pippoSigned->getSurname() . "<br>" ?>
+      <?php echo "Cart:  " . $pippoSigned->getCart()->getId() . "<br>" ?>
+      <?php echo "House Address: " . $pippoSigned->getHouseAddress()->getCity()
+                . " - " . $pippoSigned->getHouseAddress()->getStreet()
+                . " - " . $pippoSigned->getHouseAddress()->getHouseNumber()
+
+      . "<br>" ?>
+      <?php echo "Billing Address: " . $pippoSigned->getBillingAddress()->getCity()
+                . " - " . $pippoSigned->getBillingAddress()->getStreet()
+                . " - " . $pippoSigned->getBillingAddress()->getHouseNumber()
+
+      . "<br>" ?>
+
+       <?php foreach($pippoSigned->getShoppedItems() as $key => $art){
+         echo "Shopped item " . $key . " : ". $art->getID() . "<br>";
+       }
+       ?>
+
+
+
     </div>
     <hr>
     <div class="cart">
